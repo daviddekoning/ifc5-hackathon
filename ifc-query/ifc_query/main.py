@@ -7,15 +7,16 @@ sys.path.append(os.getcwd())
 
 import streamlit as st
 import requests
-from dotenv import load_dotenv
-from ifc_query import db
+from dotenv import load_dotenv, dotenv_values
+from ifc_query.auth_helpers import require_auth
+from ifc_query.db import delete_session, ensure_db_exists
+from streamlit_cookies_manager  import EncryptedCookieManager
 
 # Configure logging
 logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     level=logging.DEBUG  # Set the log level to DEBUG to capture all types of log messages
 )
-
 
 load_dotenv()
 
@@ -30,11 +31,14 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-def init_session_state():
-    if 'access_token' not in st.session_state:
-        st.session_state.access_token = None
-    if 'user_data' not in st.session_state:
-        st.session_state.user_data = None
+# Initialize cookie manager
+cookies = EncryptedCookieManager(
+    prefix="ifc_query/",
+    password=os.getenv('COOKIE_PASSWORD', 'default-secret-key')
+)
+if not cookies.ready():
+    # Wait for the component to load and send us current cookies.
+    st.stop()
 
 def github_login():
     github_auth_url = f'https://github.com/login/oauth/authorize?client_id={GITHUB_CLIENT_ID}&redirect_uri={REDIRECT_URI}&scope=read:user'
@@ -47,26 +51,26 @@ def get_user_data(access_token):
     return response.json()
 
 def main():
-    db.ensure_db_exists()
+    ensure_db_exists()
     st.title('GitHub Login Demo')
-    init_session_state()
 
-    if st.session_state.access_token is None:
-        github_login()
-    else:
-        if st.session_state.user_data is None:
-            st.session_state.user_data = get_user_data(st.session_state.access_token)
-        
-        user_data = st.session_state.user_data
-        st.write(f"Welcome, {user_data['login']}!")
-        st.write("Your GitHub profile information:")
-        st.json(user_data)
-        st.json(st.context.headers)
-        
-        if st.button('Logout'):
-            st.session_state.access_token = None
-            st.session_state.user_data = None
-            st.rerun()
+    # Check authentication - will stop execution if not authenticated
+    require_auth(cookies, github_login)
+    
+    # User is authenticated at this point
+    user_data = st.session_state.user_data
+    st.write(f"Welcome, {user_data['login']}!")
+    st.write("Your GitHub profile information:")
+    st.json(user_data)
+    
+    if st.button('Logout'):
+        session_id = cookies.get('session_id')
+        if session_id:
+            delete_session(session_id)
+            cookies.delete('session_id')
+        st.session_state.access_token = None
+        st.session_state.user_data = None
+        st.rerun()
 
 if __name__ == '__main__':
     main() 

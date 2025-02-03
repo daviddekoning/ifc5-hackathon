@@ -4,6 +4,9 @@ import importlib
 import glob
 from pathlib import Path
 from logging import log, INFO, DEBUG, WARN, ERROR
+import uuid
+from datetime import datetime, timedelta
+from typing import Optional
 
 DB_FOLDER = "ifc_query/data"
 DB_PATH = DB_FOLDER / Path("info.db")
@@ -101,3 +104,52 @@ def get_user(login: str):
     
     conn.close()
     return user
+
+def store_session(user_id: str, access_token: str) -> str:
+    """Store a session with an encrypted token and return a session ID"""
+    session_id = str(uuid.uuid4())
+    expiry = datetime.now() + timedelta(days=30)
+    
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    # TODO: Encrypt token before storage
+    query = """
+        INSERT INTO sessions (session_id, user_id, access_token, expires_at)
+        VALUES (?, ?, ?, ?)
+    """
+    cursor.execute(query, (session_id, user_id, access_token, expiry))
+    conn.commit()
+    conn.close()
+    return session_id
+
+def get_session(session_id: str) -> Optional[dict]:
+    """Retrieve and validate a session"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    query = """
+        SELECT user_id, access_token, expires_at 
+        FROM sessions 
+        WHERE session_id = ? AND expires_at > ?
+    """
+    result = cursor.execute(query, (session_id, datetime.now())).fetchone()
+    conn.close()
+    
+    if result:
+        return {
+            'user_id': result[0],
+            'access_token': result[1],
+            'expires_at': result[2]
+        }
+    return None
+
+def delete_session(session_id: str) -> None:
+    """Remove a session"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    query = "DELETE FROM sessions WHERE session_id = ?"
+    cursor.execute(query, (session_id,))
+    conn.commit()
+    conn.close()
