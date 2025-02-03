@@ -1,7 +1,11 @@
 [project]
-name = "ifc5-hackathon"
+name = "ifc-query"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "python-dotenv>=1.0.1",
+    "requests>=2.32.3",
+    "streamlit>=1.41.1",
+]

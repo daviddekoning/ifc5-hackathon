@@ -1,5 +1,5 @@
 def main():
-    print("Hello from ifc5-hackathon!")
+    print("Hello from ifc-query!")
 
 
 if __name__ == "__main__":

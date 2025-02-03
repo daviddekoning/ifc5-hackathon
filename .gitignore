@@ -8,3 +8,13 @@ wheels/
 
 # Virtual environments
 .venv
+
+# secrets
+.env
+.streamlit/secrets
+
+# Pages directory
+ifc-query/pages/
+
+# SQLite database
+*.db
