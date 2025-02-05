@@ -2,8 +2,10 @@ import streamlit as st
 import requests
 import os
 from dotenv import load_dotenv
-from ifc_query.db import add_user, get_session, delete_session
 from typing import Optional, Callable
+from ifc_query.util.db import (
+    add_user, get_session, delete_session
+)
 
 load_dotenv()
 

@@ -7,10 +7,17 @@ sys.path.append(os.getcwd())
 
 import streamlit as st
 import requests
-from dotenv import load_dotenv, dotenv_values
-from ifc_query.auth_helpers import require_auth
-from ifc_query.db import delete_session, ensure_db_exists
+from dotenv import load_dotenv
+from ifc_query.util.auth import require_auth
+from ifc_query.util.db import delete_session, ensure_db_exists
 from streamlit_cookies_manager  import EncryptedCookieManager
+
+st.set_page_config(
+    page_title="GitHub Login Demo",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 
 # Configure logging
 logging.basicConfig(
@@ -25,11 +32,6 @@ GITHUB_CLIENT_ID = os.getenv('GITHUB_CLIENT_ID')
 GITHUB_CLIENT_SECRET = os.getenv('GITHUB_CLIENT_SECRET')
 REDIRECT_URI = 'http://localhost:8080/auth'
 
-st.set_page_config(
-    page_title="GitHub Login Demo",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
 # Initialize cookie manager
 cookies = EncryptedCookieManager(

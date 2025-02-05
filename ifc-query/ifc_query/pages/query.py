@@ -1,7 +1,7 @@
 import streamlit as st
-from ..db import get_db_connection
+from ifc_query.db import get_db_connection
 import pandas as pd
-from ..pages.auth import require_auth
+from ifc_query.auth_helpers import require_auth
 
 require_auth(lambda : st.markdown("## Please return to the main page to login."))
 

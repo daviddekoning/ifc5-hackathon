@@ -7,7 +7,6 @@ from logging import log, INFO, DEBUG, WARN, ERROR
 import uuid
 from datetime import datetime, timedelta
 from typing import Optional
-
 DB_FOLDER = "ifc_query/data"
 DB_PATH = DB_FOLDER / Path("info.db")
 
