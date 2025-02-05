@@ -70,7 +70,7 @@ def edit_page():
                 st.download_button(
                     label="Download IFCX file",
                     data=ifcx_content,
-                    file_name="edited.ifcx",
+                    file_name="edit.ifcx",
                     mime="text/plain"
                 )
 
