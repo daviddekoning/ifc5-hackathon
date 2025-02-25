@@ -5,12 +5,21 @@ import io
 
 def handle_data_editor_change():
     """Handle changes in the data editor"""
-    if 'data_editor' in st.session_state:
-        edited_rows = st.session_state.data_editor['edited_rows']
-        current_df = st.session_state.current_df
+    if 'data_editor' not in st.session_state or 'current_df' not in st.session_state:
+        return
+
+    edited_rows = st.session_state.data_editor['edited_rows']
+    current_df = st.session_state.current_df
+
+    # Validate required columns exist
+    required_columns = ['id', 'property', 'value']
+    if not all(col in current_df.columns for col in required_columns):
+        st.error("Required columns (id, property, value) not found in the data")
+        return
         
-        for idx, changes in edited_rows.items():
-            if 'value' in changes:  # Only if value was changed
+    for idx, changes in edited_rows.items():
+        if 'value' in changes:  # Only if value was changed
+            try:
                 current_id = current_df.iloc[idx]['id']
                 current_property = current_df.iloc[idx]['property']
                 
@@ -29,6 +38,9 @@ def handle_data_editor_change():
                         'value': [changes['value']]
                     })
                     st.session_state.edits = pd.concat([st.session_state.edits, new_edit], ignore_index=True)
+            except Exception as e:
+                st.error(f"Error processing edit: {str(e)}")
+                return
 
 def edit_page():
     st.title("Edit IFC Properties")
@@ -41,8 +53,15 @@ def edit_page():
         if 'edits' not in st.session_state:
             st.session_state.edits = pd.DataFrame(columns=['id', 'property', 'value'])
             
+        # Store original filename in session state
+        if 'original_filename' not in st.session_state:
+            st.session_state.original_filename = uploaded_file.name
+            
         # Convert IFCX to dataframe
         df = ifcx_to_df(uploaded_file)
+        
+        # Debug print
+        st.write("DataFrame columns:", df.columns.tolist())
         
         # Store current df in session state for access in callback
         st.session_state.current_df = df
@@ -63,6 +82,11 @@ def edit_page():
             
             # Download button for edits
             if st.button("Download Edits"):
+                # Get original filename and create new filename with _edits appended
+                original_name = st.session_state.original_filename
+                base_name = original_name.rsplit('.', 1)[0]  # Remove extension
+                new_filename = f"{base_name}_edits.ifcx"
+                
                 # Convert edits to IFCX
                 ifcx_content = df_to_ifcx(st.session_state.edits)
                 
@@ -70,7 +94,7 @@ def edit_page():
                 st.download_button(
                     label="Download IFCX file",
                     data=ifcx_content,
-                    file_name="edit.ifcx",
+                    file_name=new_filename,
                     mime="text/plain"
                 )
 

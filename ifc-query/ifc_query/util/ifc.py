@@ -1,5 +1,9 @@
+import json
 import pandas as pd
 import io
+
+import streamlit as st
+
 
 def ifcx_to_df(ifcx_file: io.BytesIO) -> pd.DataFrame:
     """
@@ -13,12 +17,29 @@ def ifcx_to_df(ifcx_file: io.BytesIO) -> pd.DataFrame:
         DataFrame with columns ['id', 'property', 'value']
     """
     # Dummy data for testing
-    dummy_data = {
-        'id': ['wall_1', 'wall_1', 'door_1', 'door_1'],
-        'property': ['height', 'width', 'height', 'material'],
-        'value': ['2.4', '0.2', '2.1', 'wood']
-    }
-    return pd.DataFrame(dummy_data)
+    
+    data = json.load(ifcx_file)
+
+    filtered_data = [
+        obj for obj in data 
+        if obj.get("def") == "over" and "attributes" in obj
+    ]
+
+    ignore_attrs = ['UsdGeom:Mesh', 'xfromOp', 'UsdShade:Material']
+
+    flattened_data = []
+
+    for obj in filtered_data:
+        for prop, value in obj.get('attributes', {}).items():
+            if prop in ignore_attrs:
+                continue
+            flattened_data.append({
+                'id': obj.get('name'),
+                'property': prop,
+                'value': json.dumps(value)
+            })
+    
+    return pd.DataFrame(flattened_data)
 
 def df_to_ifcx(df: pd.DataFrame) -> str:
     """
@@ -32,10 +53,39 @@ def df_to_ifcx(df: pd.DataFrame) -> str:
         String containing the IFCX file content
     """
     # Dummy IFCX content for testing
-    dummy_ifcx = """<?xml version="1.0" encoding="UTF-8"?>
-<ifcXML xmlns="http://www.buildingsmart-tech.org/ifcXML/IFC4/Add2">
-    <!-- This is a dummy IFCX file -->
-    <!-- In reality, this would contain the actual IFC data with applied edits -->
-</ifcXML>"""
-    
-    return dummy_ifcx 
+    over_template = """{
+     "def": "over",
+     "name": "{0}",
+     "attributes": {
+        "{1}": "{2}"
+        }
+    }"""
+
+    overs = []
+
+    # Check if the DataFrame has the required columns
+    required_columns = {'id', 'property', 'value'}
+    if not required_columns.issubset(df.columns):
+        raise KeyError(f"DataFrame is missing one of the required columns: {required_columns}")
+
+    for index, row in df.iterrows():
+        # Ensure each row has the required keys
+        try:
+            id_value = row['id']
+            property_value = row['property']
+            value_value = row['value']
+        except KeyError as e:
+            raise KeyError(f"Missing key in row {index}: {e}")
+
+        st.write(id_value)
+        st.write(property_value)
+        st.write(value_value)
+        overs.append(f"""{{
+     "def": "over",
+     "name": "{id_value}",
+     "attributes": {{
+        "{property_value}": {value_value}
+     }}
+    }}""")
+
+    return "[" + ",".join(overs) + "]" 

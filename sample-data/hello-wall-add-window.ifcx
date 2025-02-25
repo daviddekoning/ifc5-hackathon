@@ -1,0 +1,35 @@
+[
+ {
+    "def": "over",
+    "name": "N93791d5d5beb437bb8ec2f1f0ba4bf3b",
+    "children": [
+        {
+         "def": "def",
+         "name": "Brand_New_Window",
+         "inherits": [
+             "</N2c2d549ff9fe4e228590562fda81a691>"]
+        }
+    ]
+  },
+  {
+   "def": "class",
+   "type": "UsdGeom:Xform",
+   "comment": "this is the instance of Window",
+   "name": "N2c2d549ff9fe4e228590562fda81a691",
+   "inherits": [
+    "</N25503984660543a18597eae657ff5bea>"]
+  },
+  {
+     "def": "over",
+     "name": "N2c2d549ff9fe4e228590562fda81a691",
+     "attributes": {
+        "xformOp": {
+         "transform": [
+          [1,0,0,0],
+          [0,1,0,0],
+          [0,0,1,0],
+          [8.36514,0,1,1]]
+        }
+      }
+   } 
+]
